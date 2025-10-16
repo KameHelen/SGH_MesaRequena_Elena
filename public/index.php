@@ -27,7 +27,9 @@ require_once __DIR__ . '/../config.php';
 
 <h2>Panel de Administración</h2>
 <p><a href="huespedes.php">Gestionar huéspedes</a></p>
-<p><a href="reservar.php">➕ Hacer una reserva</a></p>
-<p><a href="reservas_admin.php">📅 Ver reservas</a></p>
+<p><a href="reservar.php">Hacer una reserva</a></p>
+<p><a href="reservas_admin.php">Ver reservas</a></p>
+<p><a href="habitaciones.php">Gestionar habitaciones y limpieza</a></p>
+<p><a href="mantenimiento.php">Registrar mantenimiento</a></p>
 </body>
 </html>
