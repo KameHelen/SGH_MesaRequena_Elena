@@ -1,7 +1,6 @@
 <?php
 // controlador/ReservaAdminController.php
 
-require_once __DIR__ . '/../modelo/Reserva.php';
 
 class ReservaAdminController {
     private $reservaModel;

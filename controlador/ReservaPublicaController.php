@@ -1,7 +1,7 @@
 <?php
 // controlador/ReservaPublicaController.php
 
-require_once __DIR__ . '/../modelo/Reserva.php';
+
 
 class ReservaPublicaController {
     private $reservaModel;

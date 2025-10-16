@@ -1,7 +1,7 @@
 <?php
 // controlador/MantenimientoController.php
 
-require_once __DIR__ . '/../modelo/TareaMantenimiento.php';
+
 
 class MantenimientoController {
     private $mantenimientoModel;

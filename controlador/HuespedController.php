@@ -1,7 +1,7 @@
 <?php
 // controlador/HuespedController.php
 
-require_once __DIR__ . '/../modelo/Huesped.php';
+
 
 class HuespedController {
     private $huespedModel;
@@ -47,7 +47,7 @@ class HuespedController {
         }
 
         // Pasar datos a la vista
-        include __DIR__ . '/../vista/admin/huespedes.php';
+        include __DIR__ . '/../vista/huespedes.php';
     }
 }
 ?>

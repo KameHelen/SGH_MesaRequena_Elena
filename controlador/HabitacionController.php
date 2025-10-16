@@ -1,8 +1,6 @@
 <?php
 // controlador/HabitacionController.php
 
-require_once __DIR__ . '/../modelo/Habitacion.php';
-
 class HabitacionController {
     private $habitacionModel;
     private $pdo;
@@ -32,7 +30,7 @@ class HabitacionController {
         }
 
         $habitaciones = $this->habitacionModel->obtenerTodas();
-        include __DIR__ . '/../vista/admin/habitaciones.php';
+        include __DIR__ . '/../vista/habitaciones.php';
     }
 }
 ?>
