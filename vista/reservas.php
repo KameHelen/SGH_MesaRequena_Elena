@@ -1,53 +1,6 @@
 <?php
-// vista_admin/reservas.php
-
-require_once __DIR__ . '/../config.php';
-
-// Si se envía una acción (confirmar o cancelar)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
-    try {
-        $reserva_id = (int)$_POST['reserva_id'];
-        $accion = $_POST['accion'];
-
-        if ($accion === 'confirmar') {
-            $nuevo_estado = 'Confirmada';
-        } elseif ($accion === 'cancelar') {
-            $nuevo_estado = 'Cancelada';
-        } else {
-            throw new Exception("Acción no válida.");
-        }
-
-        // Actualizar estado de la reserva
-        $sql = "UPDATE reservas SET estado = ? WHERE id = ?";
-        $pdo->prepare($sql)->execute([$nuevo_estado, $reserva_id]);
-
-        $mensaje = "✅ Reserva #$reserva_id $accion correctamente.";
-        $tipo_mensaje = 'exito';
-
-    } catch (Exception $e) {
-        $mensaje = "❌ Error: " . htmlspecialchars($e->getMessage());
-        $tipo_mensaje = 'error';
-    }
-}
-
-// Cargar todas las reservas con datos del huésped y habitación
-$sql = "
-    SELECT 
-        r.id,
-        r.fecha_llegada,
-        r.fecha_salida,
-        r.precio_total,
-        r.estado,
-        r.fecha_reserva,
-        h.nombre AS huesped,
-        hab.numero AS habitacion_numero,
-        hab.tipo AS habitacion_tipo
-    FROM reservas r
-    JOIN huespedes h ON r.huesped_id = h.id
-    JOIN habitaciones hab ON r.habitacion_id = hab.id
-    ORDER BY r.fecha_reserva DESC
-";
-$reservas = $pdo->query($sql)->fetchAll();
+// vista/reservas.php
+// Recibe: $reservas, $mensaje, $tipo_mensaje
 ?>
 
 <!DOCTYPE html>
@@ -72,7 +25,6 @@ $reservas = $pdo->query($sql)->fetchAll();
         .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; }
         .btn-confirmar { background: #27ae60; }
         .btn-cancelar { background: #e74c3c; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .back { display: inline-block; margin-top: 20px; color: #3498db; text-decoration: none; }
     </style>
 </head>
