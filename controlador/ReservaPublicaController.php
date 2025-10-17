@@ -1,5 +1,4 @@
 <?php
-// controlador/ReservaPublicaController.php
 
 
 
@@ -31,11 +30,11 @@ class ReservaPublicaController {
                 }
 
                 $this->reservaModel->crear($huesped_id, $habitacion_id, $fecha_llegada, $fecha_salida, $precio_base);
-                $mensaje = "✅ Reserva creada con éxito. Estado: Pendiente.";
+                $mensaje = "Reserva creada con éxito. Estado: Pendiente.";
                 $tipo_mensaje = 'exito';
 
             } catch (Exception $e) {
-                $mensaje = "❌ " . htmlspecialchars($e->getMessage());
+                $mensaje = " X " . htmlspecialchars($e->getMessage());
                 $tipo_mensaje = 'error';
             }
         }

@@ -1,6 +1,4 @@
 <?php
-// controlador/HabitacionController.php
-
 class HabitacionController {
     private $habitacionModel;
     private $pdo;
@@ -20,11 +18,11 @@ class HabitacionController {
                 $nuevo_estado = $_POST['estado_limpieza'];
 
                 $this->habitacionModel->actualizarEstadoLimpieza($habitacion_id, $nuevo_estado);
-                $mensaje = "✅ Estado de limpieza actualizado correctamente.";
+                $mensaje = "Estado de limpieza actualizado correctamente.";
                 $tipo_mensaje = 'exito';
 
             } catch (Exception $e) {
-                $mensaje = "❌ " . htmlspecialchars($e->getMessage());
+                $mensaje = " X " . htmlspecialchars($e->getMessage());
                 $tipo_mensaje = 'error';
             }
         }

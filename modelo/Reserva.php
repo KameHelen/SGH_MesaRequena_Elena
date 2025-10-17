@@ -1,5 +1,4 @@
 <?php
-// modelo/Reserva.php
 
 class Reserva {
     private $pdo;
@@ -10,7 +9,7 @@ class Reserva {
 
     // Verificar disponibilidad de habitación en fechas dadas
     public function habitacionDisponible($habitacion_id, $fecha_llegada, $fecha_salida) {
-        // 1. ¿Hay reserva CONFIRMADA solapada?
+    
         $sql1 = "
             SELECT COUNT(*) 
             FROM reservas 
@@ -25,7 +24,6 @@ class Reserva {
             return false;
         }
 
-        // 2. ¿Hay mantenimiento ACTIVO en esas fechas?
         $sql2 = "
             SELECT COUNT(*) 
             FROM tareas_mantenimiento 
@@ -43,7 +41,7 @@ class Reserva {
         return true;
     }
 
-    // Crear nueva reserva (estado: Pendiente)
+    // Crear nueva reserva (Pendiente)
     public function crear($huesped_id, $habitacion_id, $fecha_llegada, $fecha_salida, $precio_base) {
         if (!$this->habitacionDisponible($habitacion_id, $fecha_llegada, $fecha_salida)) {
             throw new Exception("La habitación no está disponible en esas fechas.");
@@ -70,7 +68,7 @@ class Reserva {
         return $this->pdo->prepare($sql)->execute([$nuevo_estado, $reserva_id]);
     }
 
-    // Obtener todas las reservas con datos relacionados
+    // Obtener todas las reservas
     public function obtenerTodas() {
         $sql = "
             SELECT 
