@@ -1,5 +1,4 @@
 <?php
-// controlador/ReservaAdminController.php
 
 
 class ReservaAdminController {
@@ -22,11 +21,11 @@ class ReservaAdminController {
                 $estado = ($accion === 'confirmar') ? 'Confirmada' : 'Cancelada';
 
                 $this->reservaModel->actualizarEstado($reserva_id, $estado);
-                $mensaje = "✅ Reserva #$reserva_id $accion correctamente.";
+                $mensaje = "Reserva #$reserva_id $accion correctamente.";
                 $tipo_mensaje = 'exito';
 
             } catch (Exception $e) {
-                $mensaje = "❌ " . htmlspecialchars($e->getMessage());
+                $mensaje = " X " . htmlspecialchars($e->getMessage());
                 $tipo_mensaje = 'error';
             }
         }

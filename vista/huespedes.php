@@ -1,6 +1,5 @@
 <?php
-// vista/reservas.php
-// Recibe: $reservas, $mensaje, $tipo_mensaje
+
 ?>
 
 <!DOCTYPE html>

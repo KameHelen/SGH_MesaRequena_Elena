@@ -1,5 +1,5 @@
 <?php
-// controlador/MantenimientoController.php
+
 
 
 
@@ -34,11 +34,11 @@ class MantenimientoController {
                 }
 
                 $this->mantenimientoModel->crear($habitacion_id, $descripcion, $fecha_inicio, $fecha_fin);
-                $mensaje = "✅ Tarea de mantenimiento registrada correctamente.";
+                $mensaje = "Tarea de mantenimiento registrada correctamente.";
                 $tipo_mensaje = 'exito';
 
             } catch (Exception $e) {
-                $mensaje = "❌ " . htmlspecialchars($e->getMessage());
+                $mensaje = " X " . htmlspecialchars($e->getMessage());
                 $tipo_mensaje = 'error';
             }
         }

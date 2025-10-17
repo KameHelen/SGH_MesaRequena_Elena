@@ -1,5 +1,4 @@
 <?php
-// controlador/HuespedController.php
 
 
 
@@ -34,14 +33,14 @@ class HuespedController {
                 }
 
                 $this->huespedModel->crear($nombre, $email, $documento);
-                $mensaje = "✅ Huésped registrado correctamente.";
+                $mensaje = "Huésped registrado correctamente.";
                 $tipo_mensaje = 'exito';
 
-                // Recargar lista (por si hay nuevo huésped)
+                // Recargar lista
                 $huespedes = $this->huespedModel->obtenerTodos();
 
             } catch (Exception $e) {
-                $mensaje = "❌ " . htmlspecialchars($e->getMessage());
+                $mensaje = " X " . htmlspecialchars($e->getMessage());
                 $tipo_mensaje = 'error';
             }
         }

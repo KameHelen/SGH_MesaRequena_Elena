@@ -1,6 +1,5 @@
 <?php
-// vista/admin/mantenimiento.php
-// Recibe: $habitaciones, $tareas, $mensaje, $tipo_mensaje
+
 ?>
 
 <!DOCTYPE html>
@@ -32,7 +31,7 @@
 </head>
 <body>
     <div class="container">
-        <h2>🔧 Gestión de Mantenimiento</h2>
+        <h2>Gestión de Mantenimiento</h2>
 
         <?php if (!empty($mensaje)): ?>
             <div class="alert <?= $tipo_mensaje ?>"><?= $mensaje ?></div>

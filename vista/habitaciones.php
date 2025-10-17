@@ -1,6 +1,5 @@
 <?php
-// vista/admin/habitaciones.php
-// Recibe: $habitaciones, $mensaje, $tipo_mensaje
+
 ?>
 
 <!DOCTYPE html>
@@ -29,7 +28,7 @@
 </head>
 <body>
     <div class="container">
-        <h2>🛏️ Gestión de Habitaciones</h2>
+        <h2>Gestión de Habitaciones</h2>
 
         <?php if (!empty($mensaje)): ?>
             <div class="alert <?= $tipo_mensaje ?>"><?= $mensaje ?></div>

@@ -1,5 +1,4 @@
 <?php
-// modelo/Habitacion.php
 
 class Habitacion {
     private $pdo;

@@ -1,5 +1,4 @@
 <?php
-// modelo/Huesped.php
 
 class Huesped {
     private $pdo;

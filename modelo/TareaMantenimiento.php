@@ -1,5 +1,4 @@
 <?php
-// modelo/TareaMantenimiento.php
 
 class TareaMantenimiento {
     private $pdo;

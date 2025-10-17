@@ -1,11 +1,11 @@
 <?php
-// public/index.php - TODO EN UNA SOLA PÁGINA
+
 
 require_once __DIR__ . '/../config.php';
 
-// ======================
+
 // LÓGICA DE HUÉSPEDES
-// ======================
+
 $mensaje_huespedes = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_huesped') {
     try {
@@ -38,9 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 
 $huespedes = $pdo->query("SELECT * FROM huespedes ORDER BY nombre")->fetchAll();
 
-// ======================
+
 // LÓGICA DE RESERVAS (PÚBLICA)
-// ======================
+
 $mensaje_reserva = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_reserva') {
     try {
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             throw new Exception("La fecha de salida debe ser posterior a la de llegada.");
         }
 
-        // Verificar solapamiento con reservas CONFIRMADAS
+        // Verificar solapamiento con reservas confirmadas
         $sql1 = "
             SELECT COUNT(*) FROM reservas 
             WHERE habitacion_id = ? AND estado = 'Confirmada'
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             throw new Exception("La habitación ya está reservada en esas fechas.");
         }
 
-        // Verificar mantenimiento ACTIVO
+        // Verificar mantenimiento activo
         $sql2 = "
             SELECT COUNT(*) FROM tareas_mantenimiento 
             WHERE habitacion_id = ? AND estado = 'Activa'
@@ -86,10 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             VALUES (?, ?, ?, ?, ?, 'Pendiente')
         ";
         $pdo->prepare($sql3)->execute([$huesped_id, $habitacion_id, $fecha_llegada, $fecha_salida, $precio_total]);
-        $mensaje_reserva = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Reserva creada con éxito.</div>";
+        $mensaje_reserva = "<div style='color:green; padding:10px; background:#e6ffe6;'>Reserva creada con éxito.</div>";
 
     } catch (Exception $e) {
-        $mensaje_reserva = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
+        $mensaje_reserva = "<div style='color:red; padding:10px; background:#ffe6e6;'> X " . htmlspecialchars($e->getMessage()) . "</div>";
     }
 }
 
@@ -97,9 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 $huespedes_lista = $pdo->query("SELECT id, nombre FROM huespedes")->fetchAll();
 $habitaciones_lista = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitaciones")->fetchAll();
 
-// ======================
+
 // LÓGICA DE RESERVAS (ADMIN)
-// ======================
+
 $mensaje_reservas_admin = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && in_array($_POST['accion'], ['confirmar', 'cancelar'])) {
     try {
@@ -108,10 +108,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && in_array
         
         $sql = "UPDATE reservas SET estado = ? WHERE id = ?";
         $pdo->prepare($sql)->execute([$estado, $reserva_id]);
-        $mensaje_reservas_admin = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Reserva actualizada correctamente.</div>";
+        $mensaje_reservas_admin = "<div style='color:green; padding:10px; background:#e6ffe6;'>Reserva actualizada correctamente.</div>";
 
     } catch (Exception $e) {
-        $mensaje_reservas_admin = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ Error al actualizar.</div>";
+        $mensaje_reservas_admin = "<div style='color:red; padding:10px; background:#ffe6e6; X '>Error al actualizar.</div>";
     }
 }
 
@@ -123,9 +123,9 @@ $reservas = $pdo->query("
     ORDER BY r.fecha_reserva DESC
 ")->fetchAll();
 
-// ======================
+
 // LÓGICA DE HABITACIONES (LIMPIEZA)
-// ======================
+
 $mensaje_habitaciones = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'actualizar_limpieza') {
     try {
@@ -139,18 +139,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 
         $sql = "UPDATE habitaciones SET estado_limpieza = ? WHERE id = ?";
         $pdo->prepare($sql)->execute([$estado, $habitacion_id]);
-        $mensaje_habitaciones = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Estado de limpieza actualizado.</div>";
+        $mensaje_habitaciones = "<div style='color:green; padding:10px; background:#e6ffe6;'>Estado de limpieza actualizado.</div>";
 
     } catch (Exception $e) {
-        $mensaje_habitaciones = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
+        $mensaje_habitaciones = "<div style='color:red; padding:10px; background:#ffe6e6;'> X " . htmlspecialchars($e->getMessage()) . "</div>";
     }
 }
 
 $habitaciones = $pdo->query("SELECT * FROM habitaciones ORDER BY numero")->fetchAll();
 
-// ======================
+
 // LÓGICA DE MANTENIMIENTO
-// ======================
+
 $mensaje_mantenimiento = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_mantenimiento') {
     try {
@@ -171,10 +171,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             VALUES (?, ?, ?, ?, 'Activa')
         ";
         $pdo->prepare($sql)->execute([$habitacion_id, $descripcion, $fecha_inicio, $fecha_fin]);
-        $mensaje_mantenimiento = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Tarea de mantenimiento registrada.</div>";
+        $mensaje_mantenimiento = "<div style='color:green; padding:10px; background:#e6ffe6;'>Tarea de mantenimiento registrada.</div>";
 
     } catch (Exception $e) {
-        $mensaje_mantenimiento = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
+        $mensaje_mantenimiento = "<div style='color:red; padding:10px; background:#ffe6e6;'> X " . htmlspecialchars($e->getMessage()) . "</div>";
     }
 }
 
@@ -301,7 +301,7 @@ $tareas_mantenimiento = $pdo->query("
 
         <!-- GESTIÓN DE RESERVAS (ADMIN) -->
         <div class="section">
-            <h2>📅 Gestionar Reservas</h2>
+            <h2>Gestionar Reservas</h2>
             <?= $mensaje_reservas_admin ?>
             <?php if ($reservas): ?>
                 <table>
@@ -355,7 +355,7 @@ $tareas_mantenimiento = $pdo->query("
 
         <!-- GESTIÓN DE HABITACIONES (LIMPIEZA) -->
         <div class="section">
-            <h2>🛏️ Gestionar Habitaciones y Limpieza</h2>
+            <h2>Gestionar Habitaciones y Limpieza</h2>
             <?= $mensaje_habitaciones ?>
             <table>
                 <thead>
@@ -393,7 +393,7 @@ $tareas_mantenimiento = $pdo->query("
 
         <!-- GESTIÓN DE MANTENIMIENTO -->
         <div class="section">
-            <h2>🔧 Registrar Tareas de Mantenimiento</h2>
+            <h2>Registrar Tareas de Mantenimiento</h2>
             <?= $mensaje_mantenimiento ?>
             <form method="POST" style="max-width: 600px;">
                 <input type="hidden" name="accion" value="crear_mantenimiento">
