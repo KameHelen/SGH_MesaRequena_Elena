@@ -25,14 +25,28 @@ La aplicación cumple con las siguientes **reglas de negocio críticas**:
 
 ## 🗂️ Estructura del Proyecto
 
-- SGH_MesaRequena_Elena/
-    - controlador/
-    - modelo/
-    - public/
-    - vista_admin/
-    - vista_publica/
-    - sgh.sql
-
+SGH_ApellidosNombre/
+├── config.php
+├── public/
+│   └── index.php
+├── modelo/
+│   ├── Habitacion.php
+│   ├── Huesped.php
+│   ├── Reserva.php
+│   └── TareaMantenimiento.php
+├── controlador/
+│   ├── HabitacionController.php
+│   ├── HuespedController.php
+│   ├── ReservaController.php
+│   └── MantenimientoController.php
+└── vista/
+    ├── admin/
+    │   ├── habitaciones.php
+    │   ├── huespedes.php
+    │   ├── reservas.php
+    │   └── mantenimiento.php
+    └── publica/
+        └── reservar.php
 
 > 🔒 Solo los archivos dentro de `public/` deben ser accesibles directamente desde el navegador.  
 > Las carpetas `vista_admin/` y `vista_publica/` **se incluyen desde PHP**, no se acceden directamente.
