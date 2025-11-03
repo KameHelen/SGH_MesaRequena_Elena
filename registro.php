@@ -1,7 +1,7 @@
 <?php
 // registro.php
 session_start();
-
+require_once __DIR__ . '/../idioma.php'; 
 // Si ya está autenticado, redirigir
 if (isset($_SESSION['autenticado']) && $_SESSION['autenticado'] === true) {
     header("Location: bienvenida.php");
@@ -171,5 +171,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ¿Ya tienes cuenta? <a href="login.php">Iniciar sesión</a>
         </div>
     </div>
+    <div style="position: fixed; top: 20px; right: 20px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+    <a href="?lang=es" style="text-decoration: none; margin: 0 5px; <?= $idioma === 'es' ? 'font-weight: bold; color: #8e44ad;' : '' ?>">🇪🇸 ES</a>
+    <a href="?lang=en" style="text-decoration: none; margin: 0 5px; <?= $idioma === 'en' ? 'font-weight: bold; color: #8e44ad;' : '' ?>">🇬🇧 EN</a>
+</div>
 </body>
 </html>
