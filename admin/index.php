@@ -1,14 +1,14 @@
 <?php
 // admin/index.php
 session_start();
-require_once __DIR__ . '/../idioma.php'; 
+
 
 // Proteger la página
 if (!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] !== true || $_SESSION['rol'] !== 'admin') {
     header("Location: ../login.php");
     exit;
 }
-
+require_once __DIR__ . '/../idioma.php'; 
 require_once __DIR__ . '/../config.php';
 
 // ======================

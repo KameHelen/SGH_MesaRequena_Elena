@@ -2,42 +2,38 @@
 // registro.php
 session_start();
 require_once __DIR__ . '/../idioma.php'; 
-// Si ya está autenticado, redirigir
+
 if (isset($_SESSION['autenticado']) && $_SESSION['autenticado'] === true) {
     header("Location: bienvenida.php");
     exit;
 }
 
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/idioma.php';
 $mensaje = '';
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    require_once __DIR__ . '/config.php';
-    
     $nombre = trim($_POST['nombre'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $password_confirm = $_POST['password_confirm'] ?? '';
 
-    // Validaciones
     if (empty($nombre) || empty($email) || empty($password)) {
-        $mensaje = "Todos los campos son obligatorios.";
+        $mensaje = t('todos_campos_obligatorios');
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $mensaje = "El email no es válido.";
+        $mensaje = t('email_no_valido');
     } elseif (strlen($password) < 6) {
-        $mensaje = "La contraseña debe tener al menos 6 caracteres.";
+        $mensaje = t('contrasena_min_6');
     } elseif ($password !== $password_confirm) {
-        $mensaje = "Las contraseñas no coinciden.";
+        $mensaje = t('contrasenas_no_coinciden');
     } else {
-        // Verificar si el email ya existe
         $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
-            $mensaje = "Ya existe una cuenta con ese email.";
+            $mensaje = t('email_ya_existe');
         } else {
-            // Registrar nuevo usuario (rol = 'usuario')
             $sql = "INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, 'usuario')";
             $pdo->prepare($sql)->execute([$nombre, $email, $password]);
-            
-            // Iniciar sesión automáticamente
             $_SESSION['autenticado'] = true;
             $_SESSION['nombreUsuario'] = $nombre;
             $_SESSION['email'] = $email;
@@ -50,98 +46,140 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?= $idioma ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Registro - SGH</title>
+    <title><?= t('registro_titulo') ?> - <?= t('hotel_nombre') ?></title>
     <style>
-    body { 
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-        background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%);
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        height: 100vh; 
-        margin: 0; 
-    }
-    .login-container { 
-        background: white; 
-        padding: 40px; 
-        border-radius: 20px; 
-        box-shadow: 0 15px 50px rgba(0,0,0,0.3); 
-        width: 380px; 
-        text-align: center;
-    }
-    h2 { 
-        color: #8e44ad; 
-        margin-bottom: 25px; 
-        font-weight: 700;
-    }
-    .form-group { 
-        margin-bottom: 20px; 
-        text-align: left;
-    }
-    label { 
-        display: block; 
-        margin-bottom: 8px; 
-        font-weight: 600; 
-        color: #2c3e50;
-        font-size: 14px;
-    }
-    input { 
-        width: 100%; 
-        padding: 14px; 
-        border: 2px solid #e6d7f5; 
-        border-radius: 10px; 
-        box-sizing: border-box; 
-        font-size: 16px;
-        transition: border-color 0.3s;
-    }
-    input:focus { 
-        outline: none; 
-        border-color: #8e44ad; 
-        box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.2);
-    }
-    button { 
-        width: 100%; 
-        padding: 14px; 
-        background: #8e44ad; 
-        color: white; 
-        border: none; 
-        border-radius: 10px; 
-        cursor: pointer; 
-        font-size: 16px; 
-        font-weight: 600;
-        margin-top: 10px;
-        transition: background 0.3s;
-    }
-    button:hover { 
-        background: #732d91; 
-    }
-    .alert { 
-        padding: 12px; 
-        margin-bottom: 20px; 
-        border-radius: 10px; 
-        background: #ffebee; 
-        color: #e74c3c; 
-        border: 1px solid #ffcdd2;
-        font-weight: 500;
-    }
-    .login-link a { 
-        color: #8e44ad; 
-        text-decoration: none; 
-        font-weight: 600;
-        display: inline-block;
-        margin-top: 15px;
-    }
-    .login-link a:hover { 
-        text-decoration: underline; 
-    }
-</style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            position: relative;
+        }
+        .register-container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3); 
+            width: 380px; 
+            text-align: center;
+            z-index: 10;
+        }
+        h2 { 
+            color: #8e44ad; 
+            margin-bottom: 25px; 
+            font-weight: 700;
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+            text-align: left;
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        input { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #e6d7f5; 
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus { 
+            outline: none; 
+            border-color: #9b59b6; 
+            box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.2);
+        }
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background: #9b59b6; 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: 600;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        button:hover { 
+            background: #8e44ad; 
+        }
+        .alert { 
+            padding: 12px; 
+            margin-bottom: 20px; 
+            border-radius: 10px; 
+            background: #ffebee; 
+            color: #e74c3c; 
+            border: 1px solid #ffcdd2;
+            font-weight: 500;
+        }
+        .login-link { 
+            margin-top: 20px; 
+            text-align: center; 
+        }
+        .login-link a { 
+            color: #3498db; 
+            text-decoration: none; 
+            font-weight: 600;
+        }
+        .login-link a:hover { 
+            text-decoration: underline; 
+        }
+        
+        /* Selector de idioma en la esquina superior derecha */
+        .idioma-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        .idioma-btn {
+            text-decoration: none;
+            padding: 5px 10px;
+            margin: 0 3px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .idioma-btn.active {
+            background: #9b59b6;
+            color: white !important;
+        }
+        .idioma-btn:not(.active) {
+            color: #666;
+        }
+        .idioma-btn:not(.active):hover {
+            color: #9b59b6;
+            background: #f8f4ff;
+        }
+    </style>
 </head>
 <body>
+    <!-- Selector de idioma en la esquina superior derecha -->
+    <div class="idioma-selector">
+        <a href="?lang=es" class="idioma-btn <?= $idioma === 'es' ? 'active' : '' ?>">🇪🇸 ES</a>
+        <a href="?lang=en" class="idioma-btn <?= $idioma === 'en' ? 'active' : '' ?>">🇬🇧 EN</a>
+    </div>
+
     <div class="register-container">
-        <h2>📝 Crear Cuenta</h2>
+        <h2><?= t('registro_titulo') ?></h2>
         
         <?php if ($mensaje): ?>
             <div class="alert"><?= htmlspecialchars($mensaje) ?></div>
@@ -149,31 +187,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <form method="POST">
             <div class="form-group">
-                <label for="nombre">Nombre completo:</label>
+                <label for="nombre"><?= t('nombre_completo') ?>:</label>
                 <input type="text" id="nombre" name="nombre" value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" required>
             </div>
             <div class="form-group">
-                <label for="email">Email:</label>
+                <label for="email"><?= t('email') ?>:</label>
                 <input type="email" id="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
             </div>
             <div class="form-group">
-                <label for="password">Contraseña:</label>
+                <label for="password"><?= t('contrasena') ?>:</label>
                 <input type="password" id="password" name="password" required>
             </div>
             <div class="form-group">
-                <label for="password_confirm">Confirmar contraseña:</label>
+                <label for="password_confirm"><?= t('confirmar_contrasena') ?>:</label>
                 <input type="password" id="password_confirm" name="password_confirm" required>
             </div>
-            <button type="submit">Crear Cuenta</button>
+            <button type="submit"><?= t('crear_cuenta') ?></button>
         </form>
         
         <div class="login-link">
-            ¿Ya tienes cuenta? <a href="login.php">Iniciar sesión</a>
+            <p><?= t('ya_tienes_cuenta') ?> <a href="login.php"><?= t('iniciar_aqui') ?></a></p>
         </div>
     </div>
-    <div style="position: fixed; top: 20px; right: 20px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
-    <a href="?lang=es" style="text-decoration: none; margin: 0 5px; <?= $idioma === 'es' ? 'font-weight: bold; color: #8e44ad;' : '' ?>">🇪🇸 ES</a>
-    <a href="?lang=en" style="text-decoration: none; margin: 0 5px; <?= $idioma === 'en' ? 'font-weight: bold; color: #8e44ad;' : '' ?>">🇬🇧 EN</a>
-</div>
 </body>
 </html>

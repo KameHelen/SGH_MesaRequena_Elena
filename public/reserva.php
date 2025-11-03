@@ -1,7 +1,7 @@
 <?php
 // public/reserva.php
 session_start();
-require_once __DIR__ . '/../idioma.php';
+require_once __DIR__ . '/../idioma.php'; 
 
 if (!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] !== true) {
     header("Location: ../login.php");
@@ -206,16 +206,16 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
             <?php if ($huesped_existente): ?>
                 <br><small style="color: #27ae60;">✅ Ya eres huésped registrado</small>
             <?php else: ?>
-                <br><small style="color: #e74c3c;">⚠️ Primera reserva: necesitamos tu documento de identidad</small>
+                <br><small style="color: #e74c3c;">⚠️ <?= t('documento_obligatorio') ?></small>
             <?php endif; ?>
         </div>
         
-        <h2>➕ Nueva Reserva</h2>
+        <h2>➕  <?= t('reserva_titulo') ?></h2>
         <?= $mensaje ?>
         <form method="POST">
             <?php if (!$huesped_existente): ?>
                 <div class="form-group">
-                    <label for="documento_identidad">Documento de Identidad *</label>
+                    <label for="documento_identidad"><?= t('documento_identidad') ?> *</label>
                     <input type="text" id="documento_identidad" name="documento_identidad" 
                            value="<?= htmlspecialchars($_POST['documento_identidad'] ?? '') ?>" 
                            placeholder="Ej: 12345678A" required>
@@ -242,7 +242,7 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
                 <label>Fecha de salida:</label>
                 <input type="date" name="fecha_salida" required min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
             </div>
-            <button type="submit">Crear Reserva</button>
+            <button type="submit"><?= t('crear_reserva') ?></button>
         </form>
     </div>
     

@@ -8,8 +8,7 @@ if (isset($_SESSION['autenticado']) && $_SESSION['autenticado'] === true) {
 }
 
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/idioma.php'; // ✅ Incluir idioma
-
+require_once __DIR__ . '/idioma.php';
 $mensaje = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -51,6 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             align-items: center; 
             height: 100vh; 
             margin: 0; 
+            position: relative;
         }
         .login-container { 
             background: white; 
@@ -59,6 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             box-shadow: 0 15px 50px rgba(0,0,0,0.3); 
             width: 380px; 
             text-align: center;
+            z-index: 10;
         }
         h2 { 
             color: #8e44ad; 
@@ -115,27 +116,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border: 1px solid #ffcdd2;
             font-weight: 500;
         }
+        .login-link { 
+            margin-top: 20px; 
+            text-align: center; 
+        }
+        .login-link a { 
+            color: #27ae60; 
+            text-decoration: none; 
+            font-weight: 600;
+        }
+        .login-link a:hover { 
+            text-decoration: underline; 
+        }
+        
+        /* Selector de idioma en la esquina superior derecha */
         .idioma-selector {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 100;
         }
         .idioma-btn {
-            background: #f0f0f0;
-            border: 1px solid #ddd;
+            text-decoration: none;
             padding: 5px 10px;
-            margin: 0 5px;
-            cursor: pointer;
-            border-radius: 5px;
+            margin: 0 3px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
         }
         .idioma-btn.active {
             background: #8e44ad;
-            color: white;
-            border-color: #8e44ad;
+            color: white !important;
+        }
+        .idioma-btn:not(.active) {
+            color: #666;
+        }
+        .idioma-btn:not(.active):hover {
+            color: #8e44ad;
+            background: #f8f4ff;
         }
     </style>
 </head>
 <body>
+    <!-- Selector de idioma en la esquina superior derecha -->
+    <div class="idioma-selector">
+        <a href="?lang=es" class="idioma-btn <?= $idioma === 'es' ? 'active' : '' ?>">🇪🇸 ES</a>
+        <a href="?lang=en" class="idioma-btn <?= $idioma === 'en' ? 'active' : '' ?>">🇬🇧 EN</a>
+    </div>
+
     <div class="login-container">
         <h2><?= t('login_titulo') ?></h2>
         
@@ -155,25 +188,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <button type="submit"><?= t('iniciar_sesion') ?></button>
         </form>
         
-        <div class="idioma-selector">
-            <strong>Language / Idioma:</strong><br>
-            <a href="?lang=es" class="idioma-btn <?= $idioma === 'es' ? 'active' : '' ?>">🇪🇸 ES</a>
-            <a href="?lang=en" class="idioma-btn <?= $idioma === 'en' ? 'active' : '' ?>">🇬🇧 EN</a>
+        <div class="login-link">
+            <p><?= t('no_tienes_cuenta') ?> <a href="registro.php"><?= t('registrar_aqui') ?></a></p>
         </div>
         
-        <p style="margin-top: 20px; text-align: center; font-size: 14px;">
-            <?= t('no_tienes_cuenta') ?> <a href="registro.php" style="color: #27ae60; text-decoration: none;"><?= t('registrar_aqui') ?></a>
-        </p>
-        
-        <p style="margin-top: 15px; font-size: 13px; color: #666;">
+        <p style="margin-top: 20px; font-size: 13px; color: #666;">
             <strong><?= t('credenciales_prueba') ?></strong><br>
             Admin: admin@hotel.com / admin123<br>
             User: user@hotel.com / user123
         </p>
     </div>
-    <div style="position: fixed; top: 20px; right: 20px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
-    <a href="?lang=es" style="text-decoration: none; margin: 0 5px; <?= $idioma === 'es' ? 'font-weight: bold; color: #8e44ad;' : '' ?>">🇪🇸 ES</a>
-    <a href="?lang=en" style="text-decoration: none; margin: 0 5px; <?= $idioma === 'en' ? 'font-weight: bold; color: #8e44ad;' : '' ?>">🇬🇧 EN</a>
-</div>
 </body>
 </html>
