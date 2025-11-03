@@ -1,7 +1,14 @@
 <?php
 // public/reserva.php
 
+
+session_start();
+if (!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] !== true || $_SESSION['rol'] !== 'usuario') {
+    header("Location: ../login.php");
+    exit;
+}
 require_once __DIR__ . '/../config.php';
+
 
 $mensaje = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
