@@ -1,37 +1,49 @@
 <?php
-// login.php
+// registro.php
 session_start();
 
+// Si ya está autenticado, redirigir
 if (isset($_SESSION['autenticado']) && $_SESSION['autenticado'] === true) {
     header("Location: bienvenida.php");
     exit;
 }
 
-require_once __DIR__ . '/config.php';
 $mensaje = '';
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    require_once __DIR__ . '/config.php';
+    
+    $nombre = trim($_POST['nombre'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
+    $password_confirm = $_POST['password_confirm'] ?? '';
 
-    if (empty($email) || empty($password)) {
-        $mensaje = "Por favor, complete todos los campos.";
+    // Validaciones
+    if (empty($nombre) || empty($email) || empty($password)) {
+        $mensaje = "Todos los campos son obligatorios.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $mensaje = "El email no es válido.";
+    } elseif (strlen($password) < 6) {
+        $mensaje = "La contraseña debe tener al menos 6 caracteres.";
+    } elseif ($password !== $password_confirm) {
+        $mensaje = "Las contraseñas no coinciden.";
     } else {
-        // Buscar usuario por email y contraseña (texto plano)
-        $stmt = $pdo->prepare("SELECT id, nombre, email, rol FROM usuarios WHERE email = ? AND password = ?");
-        $stmt->execute([$email, $password]);
-        $usuario = $stmt->fetch();
-
-        if ($usuario) {
-            // Login exitoso
+        // Verificar si el email ya existe
+        $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            $mensaje = "Ya existe una cuenta con ese email.";
+        } else {
+            // Registrar nuevo usuario (rol = 'usuario')
+            $sql = "INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, 'usuario')";
+            $pdo->prepare($sql)->execute([$nombre, $email, $password]);
+            
+            // Iniciar sesión automáticamente
             $_SESSION['autenticado'] = true;
-            $_SESSION['nombreUsuario'] = $usuario['nombre'];
-            $_SESSION['email'] = $usuario['email'];
-            $_SESSION['rol'] = $usuario['rol'];
+            $_SESSION['nombreUsuario'] = $nombre;
+            $_SESSION['email'] = $email;
+            $_SESSION['rol'] = 'usuario';
             header("Location: bienvenida.php");
             exit;
-        } else {
-            $mensaje = "Email o contraseña incorrectos.";
         }
     }
 }
@@ -41,8 +53,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Login - SGH</title>
-   <style>
+    <title>Registro - SGH</title>
+    <style>
     body { 
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
         background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%);
@@ -128,8 +140,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2>🔒 Iniciar Sesión</h2>
+    <div class="register-container">
+        <h2>📝 Crear Cuenta</h2>
         
         <?php if ($mensaje): ?>
             <div class="alert"><?= htmlspecialchars($mensaje) ?></div>
@@ -137,24 +149,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <form method="POST">
             <div class="form-group">
+                <label for="nombre">Nombre completo:</label>
+                <input type="text" id="nombre" name="nombre" value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" required>
+            </div>
+            <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
             </div>
             <div class="form-group">
                 <label for="password">Contraseña:</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit">Iniciar Sesión</button>
+            <div class="form-group">
+                <label for="password_confirm">Confirmar contraseña:</label>
+                <input type="password" id="password_confirm" name="password_confirm" required>
+            </div>
+            <button type="submit">Crear Cuenta</button>
         </form>
-        <p style="margin-top: 20px; text-align: center; font-size: 14px;">
-    ¿No tienes cuenta? <a href="registro.php" style="color: #27ae60; text-decoration: none;">Regístrate aquí</a>
-</p>
-
-        <p style="margin-top: 20px; font-size: 14px; color: #666;">
-            <strong>Credenciales de prueba:</strong><br>
-            Admin: admin@hotel.com / admin123<br>
-            Usuario: user@hotel.com / user123
-        </p>
+        
+        <div class="login-link">
+            ¿Ya tienes cuenta? <a href="login.php">Iniciar sesión</a>
+        </div>
     </div>
 </body>
 </html>
