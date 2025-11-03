@@ -1,11 +1,11 @@
 <?php
-
+// admin/index.php
 
 require_once __DIR__ . '/../config.php';
 
-
+// ======================
 // LÓGICA DE HUÉSPEDES
-
+// ======================
 $mensaje_huespedes = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_huesped') {
     try {
@@ -20,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             throw new Exception("El email no es válido.");
         }
 
-        // Verificar email único
         $stmt = $pdo->prepare("SELECT id FROM huespedes WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
@@ -35,86 +34,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $mensaje_huespedes = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
     }
 }
-
 $huespedes = $pdo->query("SELECT * FROM huespedes ORDER BY nombre")->fetchAll();
 
-
-// LÓGICA DE RESERVAS (PÚBLICA)
-
-$mensaje_reserva = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_reserva') {
-    try {
-        $huesped_id = (int)$_POST['huesped_id'];
-        $habitacion_id = (int)$_POST['habitacion_id'];
-        $fecha_llegada = $_POST['fecha_llegada'];
-        $fecha_salida = $_POST['fecha_salida'];
-        $precio_base = (float)$_POST['precio_base'];
-
-        if ($fecha_salida <= $fecha_llegada) {
-            throw new Exception("La fecha de salida debe ser posterior a la de llegada.");
-        }
-
-        // Verificar solapamiento con reservas confirmadas
-        $sql1 = "
-            SELECT COUNT(*) FROM reservas 
-            WHERE habitacion_id = ? AND estado = 'Confirmada'
-            AND fecha_llegada < ? AND fecha_salida > ?
-        ";
-        $stmt1 = $pdo->prepare($sql1);
-        $stmt1->execute([$habitacion_id, $fecha_salida, $fecha_llegada]);
-        if ($stmt1->fetchColumn() > 0) {
-            throw new Exception("La habitación ya está reservada en esas fechas.");
-        }
-
-        // Verificar mantenimiento activo
-        $sql2 = "
-            SELECT COUNT(*) FROM tareas_mantenimiento 
-            WHERE habitacion_id = ? AND estado = 'Activa'
-            AND fecha_inicio <= ? AND fecha_fin >= ?
-        ";
-        $stmt2 = $pdo->prepare($sql2);
-        $stmt2->execute([$habitacion_id, $fecha_salida, $fecha_llegada]);
-        if ($stmt2->fetchColumn() > 0) {
-            throw new Exception("La habitación tiene mantenimiento activo en esas fechas.");
-        }
-
-        $dias = (strtotime($fecha_salida) - strtotime($fecha_llegada)) / 86400;
-        $precio_total = $dias * $precio_base;
-
-        $sql3 = "
-            INSERT INTO reservas (huesped_id, habitacion_id, fecha_llegada, fecha_salida, precio_total, estado)
-            VALUES (?, ?, ?, ?, ?, 'Pendiente')
-        ";
-        $pdo->prepare($sql3)->execute([$huesped_id, $habitacion_id, $fecha_llegada, $fecha_salida, $precio_total]);
-        $mensaje_reserva = "<div style='color:green; padding:10px; background:#e6ffe6;'>Reserva creada con éxito.</div>";
-
-    } catch (Exception $e) {
-        $mensaje_reserva = "<div style='color:red; padding:10px; background:#ffe6e6;'> X " . htmlspecialchars($e->getMessage()) . "</div>";
-    }
-}
-
-// Datos para formularios
-$huespedes_lista = $pdo->query("SELECT id, nombre FROM huespedes")->fetchAll();
-$habitaciones_lista = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitaciones")->fetchAll();
-
-
+// ======================
 // LÓGICA DE RESERVAS (ADMIN)
-
+// ======================
 $mensaje_reservas_admin = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && in_array($_POST['accion'], ['confirmar', 'cancelar'])) {
     try {
         $reserva_id = (int)$_POST['reserva_id'];
         $estado = ($_POST['accion'] === 'confirmar') ? 'Confirmada' : 'Cancelada';
-        
         $sql = "UPDATE reservas SET estado = ? WHERE id = ?";
         $pdo->prepare($sql)->execute([$estado, $reserva_id]);
-        $mensaje_reservas_admin = "<div style='color:green; padding:10px; background:#e6ffe6;'>Reserva actualizada correctamente.</div>";
+        $mensaje_reservas_admin = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Reserva actualizada correctamente.</div>";
 
     } catch (Exception $e) {
-        $mensaje_reservas_admin = "<div style='color:red; padding:10px; background:#ffe6e6; X '>Error al actualizar.</div>";
+        $mensaje_reservas_admin = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ Error al actualizar.</div>";
     }
 }
-
 $reservas = $pdo->query("
     SELECT r.*, h.nombre AS huesped, hab.numero AS habitacion 
     FROM reservas r
@@ -123,34 +60,31 @@ $reservas = $pdo->query("
     ORDER BY r.fecha_reserva DESC
 ")->fetchAll();
 
-
+// ======================
 // LÓGICA DE HABITACIONES (LIMPIEZA)
-
+// ======================
 $mensaje_habitaciones = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'actualizar_limpieza') {
     try {
         $habitacion_id = (int)$_POST['habitacion_id'];
         $estado = $_POST['estado_limpieza'];
         $estados_validos = ['Limpia', 'Sucia', 'En Limpieza'];
-        
         if (!in_array($estado, $estados_validos)) {
             throw new Exception("Estado no válido.");
         }
-
         $sql = "UPDATE habitaciones SET estado_limpieza = ? WHERE id = ?";
         $pdo->prepare($sql)->execute([$estado, $habitacion_id]);
-        $mensaje_habitaciones = "<div style='color:green; padding:10px; background:#e6ffe6;'>Estado de limpieza actualizado.</div>";
+        $mensaje_habitaciones = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Estado de limpieza actualizado.</div>";
 
     } catch (Exception $e) {
-        $mensaje_habitaciones = "<div style='color:red; padding:10px; background:#ffe6e6;'> X " . htmlspecialchars($e->getMessage()) . "</div>";
+        $mensaje_habitaciones = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
     }
 }
-
 $habitaciones = $pdo->query("SELECT * FROM habitaciones ORDER BY numero")->fetchAll();
 
-
+// ======================
 // LÓGICA DE MANTENIMIENTO
-
+// ======================
 $mensaje_mantenimiento = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_mantenimiento') {
     try {
@@ -166,18 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             throw new Exception("La fecha de fin debe ser posterior a la de inicio.");
         }
 
-        $sql = "
-            INSERT INTO tareas_mantenimiento (habitacion_id, descripcion, fecha_inicio, fecha_fin, estado)
-            VALUES (?, ?, ?, ?, 'Activa')
-        ";
+        $sql = "INSERT INTO tareas_mantenimiento (habitacion_id, descripcion, fecha_inicio, fecha_fin, estado) VALUES (?, ?, ?, ?, 'Activa')";
         $pdo->prepare($sql)->execute([$habitacion_id, $descripcion, $fecha_inicio, $fecha_fin]);
-        $mensaje_mantenimiento = "<div style='color:green; padding:10px; background:#e6ffe6;'>Tarea de mantenimiento registrada.</div>";
+        $mensaje_mantenimiento = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Tarea de mantenimiento registrada.</div>";
 
     } catch (Exception $e) {
-        $mensaje_mantenimiento = "<div style='color:red; padding:10px; background:#ffe6e6;'> X " . htmlspecialchars($e->getMessage()) . "</div>";
+        $mensaje_mantenimiento = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
     }
 }
-
 $habitaciones_mant = $pdo->query("SELECT id, numero, tipo FROM habitaciones ORDER BY numero")->fetchAll();
 $tareas_mantenimiento = $pdo->query("
     SELECT tm.*, h.numero AS habitacion 
@@ -191,9 +121,9 @@ $tareas_mantenimiento = $pdo->query("
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SGH - Hotel El Gran Descanso</title>
+    <title>Panel de Administración - SGH</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; }
         .container { max-width: 1200px; margin: 0 auto; }
         .section { background: white; margin: 20px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
@@ -216,46 +146,7 @@ $tareas_mantenimiento = $pdo->query("
 </head>
 <body>
     <div class="container">
-        <h1 style="text-align: center; color: #2c3e50;">🏨 Sistema de Gestión Hotelera - TODO EN UNO</h1>
-
-        <!-- NUEVA RESERVA (PÚBLICA) -->
-        <div class="section">
-            <h2>➕ Nueva Reserva</h2>
-            <?= $mensaje_reserva ?>
-            <form method="POST">
-                <input type="hidden" name="accion" value="crear_reserva">
-                <div class="form-group">
-                    <label>Huésped:</label>
-                    <select name="huesped_id" required>
-                        <option value="">-- Seleccione --</option>
-                        <?php foreach ($huespedes_lista as $h): ?>
-                            <option value="<?= $h['id'] ?>"><?= htmlspecialchars($h['nombre']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Habitación:</label>
-                    <select name="habitacion_id" required onchange="setPrecio(this)">
-                        <option value="">-- Seleccione --</option>
-                        <?php foreach ($habitaciones_lista as $h): ?>
-                            <option value="<?= $h['id'] ?>" data-precio="<?= $h['precio_base'] ?>">
-                                <?= htmlspecialchars($h['numero']) ?> (<?= $h['tipo'] ?>) - $<?= $h['precio_base'] ?>/noche
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <input type="hidden" name="precio_base" id="precio_base" value="0">
-                <div class="form-group">
-                    <label>Fecha de llegada:</label>
-                    <input type="date" name="fecha_llegada" required min="<?= date('Y-m-d') ?>">
-                </div>
-                <div class="form-group">
-                    <label>Fecha de salida:</label>
-                    <input type="date" name="fecha_salida" required min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
-                </div>
-                <button type="submit">Crear Reserva</button>
-            </form>
-        </div>
+        <h1 style="text-align: center; color: #2c3e50;">🏨 Panel de Administración - SGH</h1>
 
         <!-- GESTIÓN DE HUÉSPEDES -->
         <div class="section">
@@ -277,13 +168,10 @@ $tareas_mantenimiento = $pdo->query("
                 </div>
                 <button type="submit">Registrar Huésped</button>
             </form>
-
             <h3>Huéspedes registrados (<?= count($huespedes) ?>)</h3>
             <?php if ($huespedes): ?>
                 <table>
-                    <thead>
-                        <tr><th>Nombre</th><th>Email</th><th>Documento</th></tr>
-                    </thead>
+                    <thead><tr><th>Nombre</th><th>Email</th><th>Documento</th></tr></thead>
                     <tbody>
                         <?php foreach ($huespedes as $h): ?>
                             <tr>
@@ -294,21 +182,17 @@ $tareas_mantenimiento = $pdo->query("
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-            <?php else: ?>
-                <p>No hay huéspedes registrados.</p>
             <?php endif; ?>
         </div>
 
-        <!-- GESTIÓN DE RESERVAS (ADMIN) -->
+        <!-- GESTIÓN DE RESERVAS -->
         <div class="section">
-            <h2>Gestionar Reservas</h2>
+            <h2>📅 Gestionar Reservas</h2>
             <?= $mensaje_reservas_admin ?>
             <?php if ($reservas): ?>
                 <table>
                     <thead>
-                        <tr>
-                            <th>ID</th><th>Huésped</th><th>Habitación</th><th>Fechas</th><th>Precio</th><th>Estado</th><th>Acciones</th>
-                        </tr>
+                        <tr><th>ID</th><th>Huésped</th><th>Habitación</th><th>Fechas</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr>
                     </thead>
                     <tbody>
                         <?php foreach ($reservas as $r): ?>
@@ -333,34 +217,28 @@ $tareas_mantenimiento = $pdo->query("
                                         <form method="POST" style="display:inline;">
                                             <input type="hidden" name="accion" value="confirmar">
                                             <input type="hidden" name="reserva_id" value="<?= $r['id'] ?>">
-                                            <button type="submit" class="confirmar" onclick="return confirm('¿Confirmar?')">Confirmar</button>
+                                            <button type="submit" class="confirmar">Confirmar</button>
                                         </form>
                                         <form method="POST" style="display:inline;">
                                             <input type="hidden" name="accion" value="cancelar">
                                             <input type="hidden" name="reserva_id" value="<?= $r['id'] ?>">
-                                            <button type="submit" class="cancelar" onclick="return confirm('¿Cancelar?')">Cancelar</button>
+                                            <button type="submit" class="cancelar">Cancelar</button>
                                         </form>
-                                    <?php else: ?>
-                                        <em>Sin acciones</em>
                                     <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-            <?php else: ?>
-                <p>No hay reservas.</p>
             <?php endif; ?>
         </div>
 
-        <!-- GESTIÓN DE HABITACIONES (LIMPIEZA) -->
+        <!-- GESTIÓN DE HABITACIONES -->
         <div class="section">
-            <h2>Gestionar Habitaciones y Limpieza</h2>
+            <h2>🛏️ Gestionar Habitaciones y Limpieza</h2>
             <?= $mensaje_habitaciones ?>
             <table>
-                <thead>
-                    <tr><th>Número</th><th>Tipo</th><th>Precio</th><th>Estado Limpieza</th><th>Acción</th></tr>
-                </thead>
+                <thead><tr><th>Número</th><th>Tipo</th><th>Precio</th><th>Estado Limpieza</th><th>Acción</th></tr></thead>
                 <tbody>
                     <?php foreach ($habitaciones as $h): ?>
                         <tr>
@@ -393,7 +271,7 @@ $tareas_mantenimiento = $pdo->query("
 
         <!-- GESTIÓN DE MANTENIMIENTO -->
         <div class="section">
-            <h2>Registrar Tareas de Mantenimiento</h2>
+            <h2>🔧 Registrar Tareas de Mantenimiento</h2>
             <?= $mensaje_mantenimiento ?>
             <form method="POST" style="max-width: 600px;">
                 <input type="hidden" name="accion" value="crear_mantenimiento">
@@ -420,13 +298,10 @@ $tareas_mantenimiento = $pdo->query("
                 </div>
                 <button type="submit">Registrar Tarea</button>
             </form>
-
             <h3>Tareas registradas (<?= count($tareas_mantenimiento) ?>)</h3>
             <?php if ($tareas_mantenimiento): ?>
                 <table>
-                    <thead>
-                        <tr><th>Habitación</th><th>Descripción</th><th>Fechas</th><th>Estado</th></tr>
-                    </thead>
+                    <thead><tr><th>Habitación</th><th>Descripción</th><th>Fechas</th><th>Estado</th></tr></thead>
                     <tbody>
                         <?php foreach ($tareas_mantenimiento as $t): ?>
                             <tr>
@@ -438,17 +313,8 @@ $tareas_mantenimiento = $pdo->query("
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-            <?php else: ?>
-                <p>No hay tareas de mantenimiento.</p>
             <?php endif; ?>
         </div>
     </div>
-
-    <script>
-        function setPrecio(sel) {
-            const opt = sel.options[sel.selectedIndex];
-            document.getElementById('precio_base').value = opt.getAttribute('data-precio') || 0;
-        }
-    </script>
 </body>
 </html>
