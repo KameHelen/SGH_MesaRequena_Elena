@@ -1,7 +1,13 @@
 <?php
 // admin/index.php
 
+session_start();
+if (!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] !== true || $_SESSION['rol'] !== 'admin') {
+    header("Location: ../login.php");
+    exit;
+}
 require_once __DIR__ . '/../config.php';
+
 
 // ======================
 // LÓGICA DE HUÉSPEDES

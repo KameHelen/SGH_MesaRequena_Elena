@@ -6,12 +6,12 @@ USE sgh;
 
 
 
--- Tabla: usuarios
+-- Tabla: usuarios (contraseña en texto plano)
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    password VARCHAR(100) NOT NULL, 
     rol ENUM('usuario', 'admin') NOT NULL DEFAULT 'usuario'
 );
 
@@ -72,3 +72,8 @@ INSERT INTO habitaciones (numero,tipo,precio_base,estado_limpieza) VALUES
 INSERT INTO huespedes (nombre,email,documento_identidad) VALUES
 ('Juan Perez','juan@example.com','X1234567'),
 ('María López','maria@example.com','Y7654321');
+
+-- Usuarios de ejemplo
+INSERT INTO usuarios (nombre, email, password, rol) VALUES
+('Administrador', 'admin@hotel.com', 'admin123', 'admin'),
+('Usuario Normal', 'user@hotel.com', 'user123', 'usuario');

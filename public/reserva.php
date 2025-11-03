@@ -1,12 +1,41 @@
 <?php
 // public/reserva.php
+session_start();
+
+// Proteger la página
+if (!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] !== true) {
+    header("Location: ../login.php");
+    exit;
+}
+
+// Solo usuarios normales pueden acceder (no administradores)
+if ($_SESSION['rol'] !== 'usuario') {
+    header("Location: ../admin/index.php");
+    exit;
+}
 
 require_once __DIR__ . '/../config.php';
+
+// Obtener el ID del huésped asociado al email del usuario
+$email_usuario = $_SESSION['email'];
+$stmt = $pdo->prepare("SELECT id FROM huespedes WHERE email = ?");
+$stmt->execute([$email_usuario]);
+$huesped = $stmt->fetch();
+
+// Si no existe como huésped, crearlo automáticamente
+if (!$huesped) {
+    // Nota: En un sistema real, pedirías el documento de identidad
+    // Aquí usamos un valor temporal
+    $pdo->prepare("INSERT INTO huespedes (nombre, email, documento_identidad) VALUES (?, ?, ?)")
+        ->execute([$_SESSION['nombreUsuario'], $email_usuario, 'DOC-' . time()]);
+    $huesped_id = $pdo->lastInsertId();
+} else {
+    $huesped_id = $huesped['id'];
+}
 
 $mensaje = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $huesped_id = (int)$_POST['huesped_id'];
         $habitacion_id = (int)$_POST['habitacion_id'];
         $fecha_llegada = $_POST['fecha_llegada'];
         $fecha_salida = $_POST['fecha_salida'];
@@ -44,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$huespedes = $pdo->query("SELECT id, nombre FROM huespedes")->fetchAll();
 $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitaciones")->fetchAll();
 ?>
 
@@ -61,22 +89,20 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
         label { display: block; font-weight: bold; margin-bottom: 5px; }
         select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
         button { background: #27ae60; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .user-info { background: #e8f4f8; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="user-info">
+            <strong>👤 Usuario:</strong> <?= htmlspecialchars($_SESSION['nombreUsuario']) ?> 
+            (<?= htmlspecialchars($_SESSION['email']) ?>)
+        </div>
+        
         <h2>➕ Nueva Reserva</h2>
         <?= $mensaje ?>
         <form method="POST">
-            <div class="form-group">
-                <label>Huésped:</label>
-                <select name="huesped_id" required>
-                    <option value="">-- Seleccione --</option>
-                    <?php foreach ($huespedes as $h): ?>
-                        <option value="<?= $h['id'] ?>"><?= htmlspecialchars($h['nombre']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+            <input type="hidden" name="huesped_id" value="<?= $huesped_id ?>">
             <div class="form-group">
                 <label>Habitación:</label>
                 <select name="habitacion_id" required onchange="setPrecio(this)">
