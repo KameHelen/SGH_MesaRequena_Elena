@@ -2,6 +2,19 @@ DROP DATABASE IF EXISTS sgh;
 CREATE DATABASE sgh;
 USE sgh;
 
+
+
+
+
+-- Tabla: usuarios
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    rol ENUM('usuario', 'admin') NOT NULL DEFAULT 'usuario'
+);
+
 -- Tabla: habitaciones
 CREATE TABLE habitaciones (
 id INT AUTO_INCREMENT PRIMARY KEY,
