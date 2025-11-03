@@ -2,7 +2,6 @@
 // login.php
 session_start();
 
-// Si ya está autenticado, redirigir
 if (isset($_SESSION['autenticado']) && $_SESSION['autenticado'] === true) {
     header("Location: bienvenida.php");
     exit;
@@ -18,17 +17,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($email) || empty($password)) {
         $mensaje = "Por favor, complete todos los campos.";
     } else {
-        // Buscar usuario por email
-        $stmt = $pdo->prepare("SELECT id, nombre, email, password_hash, rol FROM usuarios WHERE email = ?");
-        $stmt->execute([$email]);
+        // Buscar usuario por email y contraseña (texto plano)
+        $stmt = $pdo->prepare("SELECT id, nombre, email, rol FROM usuarios WHERE email = ? AND password = ?");
+        $stmt->execute([$email, $password]);
         $usuario = $stmt->fetch();
 
-        if ($usuario && password_verify($password, $usuario['password_hash'])) {
+        if ($usuario) {
             // Login exitoso
             $_SESSION['autenticado'] = true;
             $_SESSION['nombreUsuario'] = $usuario['nombre'];
+            $_SESSION['email'] = $usuario['email'];
             $_SESSION['rol'] = $usuario['rol'];
-            $_SESSION['usuario_id'] = $usuario['id'];
             header("Location: bienvenida.php");
             exit;
         } else {
@@ -74,6 +73,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             <button type="submit">Iniciar Sesión</button>
         </form>
+        
+        <p style="margin-top: 20px; font-size: 14px; color: #666;">
+            <strong>Credenciales de prueba:</strong><br>
+            Admin: admin@hotel.com / admin123<br>
+            Usuario: user@hotel.com / user123
+        </p>
     </div>
 </body>
 </html>

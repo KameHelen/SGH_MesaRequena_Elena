@@ -8,15 +8,21 @@ if (!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] !== true) {
     exit;
 }
 
-$nombre = $_SESSION['nombreUsuario'];
-$rol = $_SESSION['rol'];
+// Depuración temporal: ver qué rol tiene el usuario
+// echo "Rol actual: " . $_SESSION['rol'] . "<br>";
+// exit;
 
 // Redirigir según el rol
-if ($rol === 'admin') {
+if ($_SESSION['rol'] === 'admin') {
     header("Location: admin/index.php");
     exit;
-} else {
+} elseif ($_SESSION['rol'] === 'usuario') {
     header("Location: public/reserva.php");
+    exit;
+} else {
+    // Rol desconocido - redirigir al login
+    session_destroy();
+    header("Location: login.php");
     exit;
 }
 ?>
