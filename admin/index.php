@@ -2,12 +2,12 @@
 // admin/index.php
 session_start();
 
-
 // Proteger la página
 if (!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] !== true || $_SESSION['rol'] !== 'admin') {
     header("Location: ../login.php");
     exit;
 }
+
 require_once __DIR__ . '/../idioma.php'; 
 require_once __DIR__ . '/../config.php';
 
@@ -36,10 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && in_array
         $estado = ($_POST['accion'] === 'confirmar') ? 'Confirmada' : 'Cancelada';
         $sql = "UPDATE reservas SET estado = ? WHERE id = ?";
         $pdo->prepare($sql)->execute([$estado, $reserva_id]);
-        $mensaje_reservas_admin = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Reserva actualizada correctamente.</div>";
+        $mensaje_reservas_admin = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ " . t('reserva_actualizada') . "</div>";
 
     } catch (Exception $e) {
-        $mensaje_reservas_admin = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ Error al actualizar.</div>";
+        $mensaje_reservas_admin = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . t('error_actualizar') . "</div>";
     }
 }
 $reservas = $pdo->query("
@@ -60,11 +60,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $estado = $_POST['estado_limpieza'];
         $estados_validos = ['Limpia', 'Sucia', 'En Limpieza'];
         if (!in_array($estado, $estados_validos)) {
-            throw new Exception("Estado no válido.");
+            throw new Exception(t('estado_no_valido'));
         }
         $sql = "UPDATE habitaciones SET estado_limpieza = ? WHERE id = ?";
         $pdo->prepare($sql)->execute([$estado, $habitacion_id]);
-        $mensaje_habitaciones = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Estado de limpieza actualizado.</div>";
+        $mensaje_habitaciones = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ " . t('limpieza_actualizada') . "</div>";
 
     } catch (Exception $e) {
         $mensaje_habitaciones = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
@@ -84,15 +84,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $fecha_fin = $_POST['fecha_fin'] ?? '';
 
         if (empty($descripcion) || empty($fecha_inicio) || empty($fecha_fin)) {
-            throw new Exception("Todos los campos son obligatorios.");
+            throw new Exception(t('todos_campos_obligatorios'));
         }
         if ($fecha_fin < $fecha_inicio) {
-            throw new Exception("La fecha de fin debe ser posterior a la de inicio.");
+            throw new Exception(t('fecha_fin_posterior_inicio'));
         }
 
         $sql = "INSERT INTO tareas_mantenimiento (habitacion_id, descripcion, fecha_inicio, fecha_fin, estado) VALUES (?, ?, ?, ?, 'Activa')";
         $pdo->prepare($sql)->execute([$habitacion_id, $descripcion, $fecha_inicio, $fecha_fin]);
-        $mensaje_mantenimiento = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Tarea de mantenimiento registrada.</div>";
+        $mensaje_mantenimiento = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ " . t('mantenimiento_registrado') . "</div>";
 
     } catch (Exception $e) {
         $mensaje_mantenimiento = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
@@ -108,10 +108,10 @@ $tareas_mantenimiento = $pdo->query("
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?= $idioma ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Administración - SGH</title>
+    <title><?= t('panel_admin') ?></title>
     <style>
     body { 
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -133,7 +133,7 @@ $tareas_mantenimiento = $pdo->query("
     }
     h1 { 
         text-align: center; 
-        color: #8e44ad; 
+        color: #2c3e50; 
         margin-bottom: 30px; 
         font-weight: 700;
         text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
@@ -270,42 +270,42 @@ $tareas_mantenimiento = $pdo->query("
 </head>
 <body>
     <div class="container">
-        <h1 style="text-align: center; color: #2c3e50;">🏨 Panel de Administración - SGH</h1>
+        <h1><?= t('panel_admin') ?></h1>
         
         <!-- Información del usuario admin -->
         <div style="text-align: center; margin-bottom: 20px; padding: 10px; background: #e8f4f8; border-radius: 5px;">
-            <strong>👤 Conectado como:</strong> <?= htmlspecialchars($_SESSION['nombreUsuario']) ?> (Administrador)
-            <a href="../cerrar_sesion.php" style="margin-left: 20px; color: #e74c3c; text-decoration: none;">🔒 Cerrar Sesión</a>
+            <strong>👤 <?= t('conectado_como') ?>:</strong> <?= htmlspecialchars($_SESSION['nombreUsuario']) ?> (<?= t('administrador') ?>)
+            <a href="../cerrar_sesion.php" style="margin-left: 20px; color: #e74c3c; text-decoration: none;">🔒 <?= t('cerrar_sesion') ?></a>
         </div>
 
         <!-- GESTIÓN DE USUARIOS REGISTRADOS (todos los que pueden hacer login) -->
         <div class="section">
-            <h2>👥 Usuarios Registrados (Pueden hacer login)</h2>
-            <p><em>Estos usuarios están registrados en el sistema pero aún no han hecho ninguna reserva.</em></p>
+            <h2>👥 <?= t('usuarios_registrados') ?></h2>
+            <p><em><?= t('descripcion_usuarios_registrados') ?></em></p>
             <?php if ($usuarios_registrados): ?>
                 <table>
-                    <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th></tr></thead>
+                    <thead><tr><th><?= t('nombre') ?></th><th><?= t('email') ?></th><th><?= t('rol') ?></th></tr></thead>
                     <tbody>
                         <?php foreach ($usuarios_registrados as $u): ?>
                             <tr>
                                 <td><?= htmlspecialchars($u['nombre']) ?></td>
                                 <td><?= htmlspecialchars($u['email']) ?></td>
-                                <td><?= $u['rol'] === 'admin' ? 'Administrador' : 'Usuario' ?></td>
+                                <td><?= $u['rol'] === 'admin' ? t('administrador') : t('usuario') ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             <?php else: ?>
-                <p>No hay usuarios registrados.</p>
+                <p><?= t('no_usuarios') ?></p>
             <?php endif; ?>
         </div>
 
         <!-- GESTIÓN DE HUÉSPEDES REALES (solo quienes han reservado) -->
         <div class="section">
-            <h2>🏨 Huéspedes Reales (Han hecho al menos una reserva)</h2>
+            <h2>🏨 <?= t('huéspedes_reales') ?></h2>
             <?php if ($huespedes_reales): ?>
                 <table>
-                    <thead><tr><th>Nombre</th><th>Email</th><th>Documento Identidad</th></tr></thead>
+                    <thead><tr><th><?= t('nombre') ?></th><th><?= t('email') ?></th><th><?= t('documento_identidad') ?></th></tr></thead>
                     <tbody>
                         <?php foreach ($huespedes_reales as $h): ?>
                             <tr>
@@ -317,18 +317,26 @@ $tareas_mantenimiento = $pdo->query("
                     </tbody>
                 </table>
             <?php else: ?>
-                <p>No hay huéspedes reales (ningún usuario ha hecho una reserva aún).</p>
+                <p><?= t('no_huespedes') ?></p>
             <?php endif; ?>
         </div>
 
         <!-- GESTIÓN DE RESERVAS -->
         <div class="section">
-            <h2>📅 Gestionar Reservas</h2>
+            <h2>📅 <?= t('gestion_reservas') ?></h2>
             <?= $mensaje_reservas_admin ?>
             <?php if ($reservas): ?>
                 <table>
                     <thead>
-                        <tr><th>ID</th><th>Huésped</th><th>Habitación</th><th>Fechas</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr>
+                        <tr>
+                            <th><?= t('id') ?></th>
+                            <th><?= t('huesped') ?></th>
+                            <th><?= t('habitacion') ?></th>
+                            <th><?= t('fechas') ?></th>
+                            <th><?= t('precio') ?></th>
+                            <th><?= t('estado') ?></th>
+                            <th><?= t('acciones') ?></th>
+                        </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($reservas as $r): ?>
@@ -353,12 +361,12 @@ $tareas_mantenimiento = $pdo->query("
                                         <form method="POST" style="display:inline;">
                                             <input type="hidden" name="accion" value="confirmar">
                                             <input type="hidden" name="reserva_id" value="<?= $r['id'] ?>">
-                                            <button type="submit" class="confirmar">Confirmar</button>
+                                            <button type="submit" class="confirmar"><?= t('confirmar') ?></button>
                                         </form>
                                         <form method="POST" style="display:inline;">
                                             <input type="hidden" name="accion" value="cancelar">
                                             <input type="hidden" name="reserva_id" value="<?= $r['id'] ?>">
-                                            <button type="submit" class="cancelar">Cancelar</button>
+                                            <button type="submit" class="cancelar"><?= t('cancelar') ?></button>
                                         </form>
                                     <?php endif; ?>
                                 </td>
@@ -371,15 +379,23 @@ $tareas_mantenimiento = $pdo->query("
 
         <!-- GESTIÓN DE HABITACIONES -->
         <div class="section">
-            <h2>🛏️ Gestionar Habitaciones y Limpieza</h2>
+            <h2>🛏️ <?= t('gestion_habitaciones') ?></h2>
             <?= $mensaje_habitaciones ?>
             <table>
-                <thead><tr><th>Número</th><th>Tipo</th><th>Precio</th><th>Estado Limpieza</th><th>Acción</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th><?= t('numero') ?></th>
+                        <th><?= t('tipo') ?></th>
+                        <th><?= t('precio') ?></th>
+                        <th><?= t('estado_limpieza') ?></th>
+                        <th><?= t('accion') ?></th>
+                    </tr>
+                </thead>
                 <tbody>
                     <?php foreach ($habitaciones as $h): ?>
                         <tr>
                             <td><?= htmlspecialchars($h['numero']) ?></td>
-                            <td><?= htmlspecialchars($h['tipo']) ?></td>
+                            <td><?= t('tipo_habitacion_' . strtolower($h['tipo'])) ?></td>
                             <td>$<?= number_format($h['precio_base'], 2) ?></td>
                             <td>
                                 <?php
@@ -392,11 +408,11 @@ $tareas_mantenimiento = $pdo->query("
                                     <input type="hidden" name="accion" value="actualizar_limpieza">
                                     <input type="hidden" name="habitacion_id" value="<?= $h['id'] ?>">
                                     <select name="estado_limpieza">
-                                        <option value="Limpia" <?= $h['estado_limpieza'] === 'Limpia' ? 'selected' : '' ?>>Limpia</option>
-                                        <option value="Sucia" <?= $h['estado_limpieza'] === 'Sucia' ? 'selected' : '' ?>>Sucia</option>
-                                        <option value="En Limpieza" <?= $h['estado_limpieza'] === 'En Limpieza' ? 'selected' : '' ?>>En Limpieza</option>
+                                        <option value="Limpia" <?= $h['estado_limpieza'] === 'Limpia' ? 'selected' : '' ?>><?= t('limpia') ?></option>
+                                        <option value="Sucia" <?= $h['estado_limpieza'] === 'Sucia' ? 'selected' : '' ?>><?= t('sucia') ?></option>
+                                        <option value="En Limpieza" <?= $h['estado_limpieza'] === 'En Limpieza' ? 'selected' : '' ?>><?= t('en_limpieza') ?></option>
                                     </select>
-                                    <button type="submit">Guardar</button>
+                                    <button type="submit"><?= t('guardar') ?></button>
                                 </form>
                             </td>
                         </tr>
@@ -407,37 +423,44 @@ $tareas_mantenimiento = $pdo->query("
 
         <!-- GESTIÓN DE MANTENIMIENTO -->
         <div class="section">
-            <h2>🔧 Registrar Tareas de Mantenimiento</h2>
+            <h2>🔧 <?= t('gestion_mantenimiento') ?></h2>
             <?= $mensaje_mantenimiento ?>
             <form method="POST" style="max-width: 600px;">
                 <input type="hidden" name="accion" value="crear_mantenimiento">
                 <div class="form-group">
-                    <label>Habitación:</label>
+                    <label><?= t('habitacion') ?>:</label>
                     <select name="habitacion_id" required>
-                        <option value="">-- Seleccione --</option>
+                        <option value=""><?= t('seleccionar_habitacion') ?></option>
                         <?php foreach ($habitaciones_mant as $h): ?>
-                            <option value="<?= $h['id'] ?>"><?= htmlspecialchars($h['numero']) ?> (<?= $h['tipo'] ?>)</option>
+                            <option value="<?= $h['id'] ?>"><?= htmlspecialchars($h['numero']) ?> (<?= t('tipo_habitacion_' . strtolower($h['tipo'])) ?>)</option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Fecha de inicio:</label>
+                    <label><?= t('fecha_inicio') ?>:</label>
                     <input type="date" name="fecha_inicio" required>
                 </div>
                 <div class="form-group">
-                    <label>Fecha de fin:</label>
+                    <label><?= t('fecha_fin') ?>:</label>
                     <input type="date" name="fecha_fin" required>
                 </div>
                 <div class="form-group">
-                    <label>Descripción:</label>
-                    <textarea name="descripcion" required placeholder="Ej: Arreglar grifo"></textarea>
+                    <label><?= t('descripcion') ?>:</label>
+                    <textarea name="descripcion" required placeholder="<?= t('placeholder_descripcion_mantenimiento') ?>"></textarea>
                 </div>
-                <button type="submit">Registrar Tarea</button>
+                <button type="submit"><?= t('registrar_tarea') ?></button>
             </form>
-            <h3>Tareas registradas (<?= count($tareas_mantenimiento) ?>)</h3>
+            <h3><?= t('tareas_registradas') ?> (<?= count($tareas_mantenimiento) ?>)</h3>
             <?php if ($tareas_mantenimiento): ?>
                 <table>
-                    <thead><tr><th>Habitación</th><th>Descripción</th><th>Fechas</th><th>Estado</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th><?= t('habitacion') ?></th>
+                            <th><?= t('descripcion') ?></th>
+                            <th><?= t('fechas') ?></th>
+                            <th><?= t('estado') ?></th>
+                        </tr>
+                    </thead>
                     <tbody>
                         <?php foreach ($tareas_mantenimiento as $t): ?>
                             <tr>

@@ -202,14 +202,14 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
     <div class="container">
         <div class="user-header">
             <div class="user-details">
-                <strong>👤 Usuario:</strong> <?= htmlspecialchars($_SESSION['nombreUsuario']) ?> 
+                <strong>👤 <?= t('usuario') ?>:</strong> <?= htmlspecialchars($_SESSION['nombreUsuario']) ?> 
                 (<?= htmlspecialchars($_SESSION['email']) ?>)
               <a href="../cerrar_sesion.php" class="logout-btn">🔒 <?= t('cerrar_sesion') ?></a>
             </div>
          
         </div>
         
-        <h2>➕  <?= t('reserva_titulo') ?></h2>
+        <h2>➕ <?= t('reserva_titulo') ?></h2>
         <?= $mensaje ?>
         <form method="POST">
             <?php if (!$huesped_existente): ?>
@@ -222,7 +222,7 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
             <?php endif; ?>
 
             <div class="form-group">
-                <label>Habitación:</label>
+               <label><?= t('habitacion') ?>:</label>
                 <select name="habitacion_id" required onchange="setPrecio(this)">
                     <option value=""><?= t('-- Seleccione --') ?></option>
                     <?php foreach ($habitaciones as $h): ?>
