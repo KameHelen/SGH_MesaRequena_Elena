@@ -1,14 +1,13 @@
 <?php
 // public/reserva.php
 session_start();
+require_once __DIR__ . '/../idioma.php'; 
 
-// Proteger la página
 if (!isset($_SESSION['autenticado']) || $_SESSION['autenticado'] !== true) {
     header("Location: ../login.php");
     exit;
 }
 
-// Solo usuarios normales pueden acceder (no administradores)
 if ($_SESSION['rol'] !== 'usuario') {
     header("Location: ../admin/index.php");
     exit;
@@ -16,24 +15,14 @@ if ($_SESSION['rol'] !== 'usuario') {
 
 require_once __DIR__ . '/../config.php';
 
-// Obtener el ID del huésped asociado al email del usuario
+// Verificar si YA es huésped
 $email_usuario = $_SESSION['email'];
-$stmt = $pdo->prepare("SELECT id FROM huespedes WHERE email = ?");
+$stmt = $pdo->prepare("SELECT id, documento_identidad FROM huespedes WHERE email = ?");
 $stmt->execute([$email_usuario]);
-$huesped = $stmt->fetch();
-
-// Si no existe como huésped, crearlo automáticamente
-if (!$huesped) {
-    // Nota: En un sistema real, pedirías el documento de identidad
-    // Aquí usamos un valor temporal
-    $pdo->prepare("INSERT INTO huespedes (nombre, email, documento_identidad) VALUES (?, ?, ?)")
-        ->execute([$_SESSION['nombreUsuario'], $email_usuario, 'DOC-' . time()]);
-    $huesped_id = $pdo->lastInsertId();
-} else {
-    $huesped_id = $huesped['id'];
-}
+$huesped_existente = $stmt->fetch();
 
 $mensaje = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $habitacion_id = (int)$_POST['habitacion_id'];
@@ -45,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("La fecha de salida debe ser posterior a la de llegada.");
         }
 
-        // Verificar solapamiento con reservas confirmadas
+        // Verificar disponibilidad
         $sql1 = "SELECT COUNT(*) FROM reservas WHERE habitacion_id = ? AND estado = 'Confirmada' AND fecha_llegada < ? AND fecha_salida > ?";
         $stmt1 = $pdo->prepare($sql1);
         $stmt1->execute([$habitacion_id, $fecha_salida, $fecha_llegada]);
@@ -53,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("La habitación ya está reservada en esas fechas.");
         }
 
-        // Verificar mantenimiento activo
         $sql2 = "SELECT COUNT(*) FROM tareas_mantenimiento WHERE habitacion_id = ? AND estado = 'Activa' AND fecha_inicio <= ? AND fecha_fin >= ?";
         $stmt2 = $pdo->prepare($sql2);
         $stmt2->execute([$habitacion_id, $fecha_salida, $fecha_llegada]);
@@ -61,15 +49,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("La habitación tiene mantenimiento activo en esas fechas.");
         }
 
+        // GESTIÓN DEL HUÉSPED
+        if (!$huesped_existente) {
+            // Es la PRIMERA RESERVA - necesitamos el DNI
+            $documento_identidad = trim($_POST['documento_identidad'] ?? '');
+            if (empty($documento_identidad)) {
+                throw new Exception("El documento de identidad es obligatorio para tu primera reserva.");
+            }
+            
+            // Crear nuevo huésped
+            $pdo->prepare("INSERT INTO huespedes (nombre, email, documento_identidad) VALUES (?, ?, ?)")
+                ->execute([$_SESSION['nombreUsuario'], $email_usuario, $documento_identidad]);
+            $huesped_id = $pdo->lastInsertId();
+        } else {
+            // Ya es huésped - usar el existente
+            $huesped_id = $huesped_existente['id'];
+        }
+
+        // Crear la reserva
         $dias = (strtotime($fecha_salida) - strtotime($fecha_llegada)) / 86400;
         $precio_total = $dias * $precio_base;
-
-        $sql3 = "INSERT INTO reservas (huesped_id, habitacion_id, fecha_llegada, fecha_salida, precio_total, estado) VALUES (?, ?, ?, ?, ?, 'Pendiente')";
-        $pdo->prepare($sql3)->execute([$huesped_id, $habitacion_id, $fecha_llegada, $fecha_salida, $precio_total]);
-        $mensaje = "<div style='color:green; padding:10px; background:#e6ffe6;'>✅ Reserva creada con éxito.</div>";
+        $pdo->prepare("INSERT INTO reservas (huesped_id, habitacion_id, fecha_llegada, fecha_salida, precio_total, estado) VALUES (?, ?, ?, ?, ?, 'Pendiente')")
+            ->execute([$huesped_id, $habitacion_id, $fecha_llegada, $fecha_salida, $precio_total]);
+        
+        $mensaje = "<div class='alert success'>✅ Reserva creada con éxito.</div>";
+        
+        // Refrescar el estado de huésped para la vista
+        $stmt = $pdo->prepare("SELECT id, documento_identidad FROM huespedes WHERE email = ?");
+        $stmt->execute([$email_usuario]);
+        $huesped_existente = $stmt->fetch();
 
     } catch (Exception $e) {
-        $mensaje = "<div style='color:red; padding:10px; background:#ffe6e6;'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
+        $mensaje = "<div class='alert error'>❌ " . htmlspecialchars($e->getMessage()) . "</div>";
     }
 }
 
@@ -81,32 +92,139 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
 <head>
     <meta charset="UTF-8">
     <title>Nueva Reserva - Hotel El Gran Descanso</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background: #f9f9f9; }
-        .container { max-width: 600px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h2 { color: #2c3e50; }
-        .form-group { margin: 15px 0; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { background: #27ae60; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
-        .user-info { background: #e8f4f8; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
-    </style>
+  <style>
+    body { 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        margin: 0; 
+        background: linear-gradient(135deg, #f5f0ff 0%, #e8e1ff 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+    .container { 
+        background: white; 
+        padding: 30px; 
+        border-radius: 15px; 
+        box-shadow: 0 10px 30px rgba(142, 68, 173, 0.2); 
+        width: 100%;
+        max-width: 600px;
+        border: 1px solid #e6d7f5;
+    }
+    h2 { 
+        color: #8e44ad; 
+        text-align: center; 
+        margin-bottom: 25px; 
+        font-weight: 600;
+        border-bottom: 2px solid #f0e6ff;
+        padding-bottom: 15px;
+    }
+    .form-group { 
+        margin: 20px 0; 
+    }
+    label { 
+        display: block; 
+        font-weight: 600; 
+        margin-bottom: 8px; 
+        color: #2c3e50;
+        font-size: 14px;
+    }
+    select, input { 
+        width: 100%; 
+        padding: 12px; 
+        border: 2px solid #e6d7f5; 
+        border-radius: 8px; 
+        font-size: 15px;
+        transition: border-color 0.3s;
+    }
+    select:focus, input:focus { 
+        outline: none; 
+        border-color: #8e44ad; 
+        box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.1);
+    }
+    button { 
+        background: #8e44ad; 
+        color: white; 
+        padding: 14px 25px; 
+        border: none; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-size: 16px; 
+        font-weight: 600;
+        width: 100%;
+        transition: background 0.3s;
+    }
+    button:hover { 
+        background: #732d91; 
+    }
+    .user-info { 
+        background: #f8f4ff; 
+        padding: 15px; 
+        border-radius: 10px; 
+        margin-bottom: 25px; 
+        border-left: 4px solid #8e44ad;
+        text-align: center;
+    }
+    .alert { 
+        padding: 12px; 
+        margin-bottom: 20px; 
+        border-radius: 8px; 
+        font-weight: 500;
+        text-align: center;
+    }
+    .success { 
+        background: #e8f5e9; 
+        color: #27ae60; 
+        border: 1px solid #c8e6c9;
+    }
+    .error { 
+        background: #ffebee; 
+        color: #e74c3c; 
+        border: 1px solid #ffcdd2;
+    }
+    .logout-btn {
+        display: inline-block; 
+        padding: 10px 20px; 
+        background: #e74c3c; 
+        color: white; 
+        text-decoration: none; 
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.3s;
+    }
+    .logout-btn:hover {
+        background: #c0392b;
+    }
+</style>
 </head>
 <body>
     <div class="container">
-        <div class="user-info">
-            <strong>👤 Usuario:</strong> <?= htmlspecialchars($_SESSION['nombreUsuario']) ?> 
-            (<?= htmlspecialchars($_SESSION['email']) ?>)
+        <div class="user-header">
+            <div class="user-details">
+                <strong>👤 <?= t('usuario') ?>:</strong> <?= htmlspecialchars($_SESSION['nombreUsuario']) ?> 
+                (<?= htmlspecialchars($_SESSION['email']) ?>)
+              <a href="../cerrar_sesion.php" class="logout-btn">🔒 <?= t('cerrar_sesion') ?></a>
+            </div>
+         
         </div>
         
-        <h2>➕ Nueva Reserva</h2>
+        <h2>➕ <?= t('reserva_titulo') ?></h2>
         <?= $mensaje ?>
         <form method="POST">
-            <input type="hidden" name="huesped_id" value="<?= $huesped_id ?>">
+            <?php if (!$huesped_existente): ?>
+                <div class="form-group">
+                    <label for="documento_identidad"><?= t('documento_identidad') ?> *</label>
+                    <input type="text" id="documento_identidad" name="documento_identidad" 
+                           value="<?= htmlspecialchars($_POST['documento_identidad'] ?? '') ?>" 
+                           placeholder="Ej: 12345678A" required>
+                </div>
+            <?php endif; ?>
+
             <div class="form-group">
-                <label>Habitación:</label>
+               <label><?= t('habitacion') ?>:</label>
                 <select name="habitacion_id" required onchange="setPrecio(this)">
-                    <option value="">-- Seleccione --</option>
+                    <option value=""><?= t('-- Seleccione --') ?></option>
                     <?php foreach ($habitaciones as $h): ?>
                         <option value="<?= $h['id'] ?>" data-precio="<?= $h['precio_base'] ?>">
                             <?= htmlspecialchars($h['numero']) ?> (<?= $h['tipo'] ?>) - $<?= $h['precio_base'] ?>/noche
@@ -116,21 +234,27 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
             </div>
             <input type="hidden" name="precio_base" id="precio_base" value="0">
             <div class="form-group">
-                <label>Fecha de llegada:</label>
+                <label><?= t('fecha_llegada') ?>:</label>
                 <input type="date" name="fecha_llegada" required min="<?= date('Y-m-d') ?>">
             </div>
             <div class="form-group">
-                <label>Fecha de salida:</label>
+                <label><?= t('fecha_salida') ?>:</label>
                 <input type="date" name="fecha_salida" required min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
             </div>
-            <button type="submit">Crear Reserva</button>
+            <button type="submit"><?= t('crear_reserva') ?></button>
         </form>
     </div>
+    
+    
     <script>
         function setPrecio(sel) {
             const opt = sel.options[sel.selectedIndex];
             document.getElementById('precio_base').value = opt.getAttribute('data-precio') || 0;
         }
     </script>
+    <div style="position: fixed; top: 20px; right: 20px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+    <a href="?lang=es" style="text-decoration: none; margin: 0 5px; <?= $idioma === 'es' ? 'font-weight: bold; color: #8e44ad;' : '' ?>">🇪🇸 ES</a>
+    <a href="?lang=en" style="text-decoration: none; margin: 0 5px; <?= $idioma === 'en' ? 'font-weight: bold; color: #8e44ad;' : '' ?>">🇬🇧 EN</a>
+</div>
 </body>
 </html>

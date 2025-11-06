@@ -1,6 +1,7 @@
 <?php
-// login.php
+// registro.php
 session_start();
+require_once __DIR__ . '/../idioma.php'; 
 
 if (isset($_SESSION['autenticado']) && $_SESSION['autenticado'] === true) {
     header("Location: bienvenida.php");
@@ -12,25 +13,33 @@ require_once __DIR__ . '/idioma.php';
 $mensaje = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $nombre = trim($_POST['nombre'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
+    $password_confirm = $_POST['password_confirm'] ?? '';
 
-    if (empty($email) || empty($password)) {
-        $mensaje = t('email_contrasena_incorrectos');
+    if (empty($nombre) || empty($email) || empty($password)) {
+        $mensaje = t('todos_campos_obligatorios');
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $mensaje = t('email_no_valido');
+    } elseif (strlen($password) < 6) {
+        $mensaje = t('contrasena_min_6');
+    } elseif ($password !== $password_confirm) {
+        $mensaje = t('contrasenas_no_coinciden');
     } else {
-        $stmt = $pdo->prepare("SELECT id, nombre, email, rol FROM usuarios WHERE email = ? AND password = ?");
-        $stmt->execute([$email, $password]);
-        $usuario = $stmt->fetch();
-
-        if ($usuario) {
+        $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            $mensaje = t('email_ya_existe');
+        } else {
+            $sql = "INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, 'usuario')";
+            $pdo->prepare($sql)->execute([$nombre, $email, $password]);
             $_SESSION['autenticado'] = true;
-            $_SESSION['nombreUsuario'] = $usuario['nombre'];
-            $_SESSION['email'] = $usuario['email'];
-            $_SESSION['rol'] = $usuario['rol'];
+            $_SESSION['nombreUsuario'] = $nombre;
+            $_SESSION['email'] = $email;
+            $_SESSION['rol'] = 'usuario';
             header("Location: bienvenida.php");
             exit;
-        } else {
-            $mensaje = t('email_contrasena_incorrectos');
         }
     }
 }
@@ -40,11 +49,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html lang="<?= $idioma ?>">
 <head>
     <meta charset="UTF-8">
-    <title><?= t('login_titulo') ?> - <?= t('hotel_nombre') ?></title>
+    <title><?= t('registro_titulo') ?> - <?= t('hotel_nombre') ?></title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(135deg, #8e44ad 0%, #6c3483 100%);
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
             display: flex; 
             justify-content: center; 
             align-items: center; 
@@ -52,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin: 0; 
             position: relative;
         }
-        .login-container { 
+        .register-container { 
             background: white; 
             padding: 40px; 
             border-radius: 20px; 
@@ -88,13 +97,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         input:focus { 
             outline: none; 
-            border-color: #8e44ad; 
-            box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.2);
+            border-color: #9b59b6; 
+            box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.2);
         }
         button { 
             width: 100%; 
             padding: 14px; 
-            background: #8e44ad; 
+            background: #9b59b6; 
             color: white; 
             border: none; 
             border-radius: 10px; 
@@ -105,7 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             transition: background 0.3s;
         }
         button:hover { 
-            background: #732d91; 
+            background: #8e44ad; 
         }
         .alert { 
             padding: 12px; 
@@ -121,7 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             text-align: center; 
         }
         .login-link a { 
-            color: #27ae60; 
+            color: #3498db; 
             text-decoration: none; 
             font-weight: 600;
         }
@@ -150,14 +159,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             transition: all 0.3s;
         }
         .idioma-btn.active {
-            background: #8e44ad;
+            background: #9b59b6;
             color: white !important;
         }
         .idioma-btn:not(.active) {
             color: #666;
         }
         .idioma-btn:not(.active):hover {
-            color: #8e44ad;
+            color: #9b59b6;
             background: #f8f4ff;
         }
     </style>
@@ -169,8 +178,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <a href="?lang=en" class="idioma-btn <?= $idioma === 'en' ? 'active' : '' ?>">🇬🇧 EN</a>
     </div>
 
-    <div class="login-container">
-        <h2><?= t('login_titulo') ?></h2>
+    <div class="register-container">
+        <h2><?= t('registro_titulo') ?></h2>
         
         <?php if ($mensaje): ?>
             <div class="alert"><?= htmlspecialchars($mensaje) ?></div>
@@ -178,25 +187,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <form method="POST">
             <div class="form-group">
+                <label for="nombre"><?= t('nombre_completo') ?>:</label>
+                <input type="text" id="nombre" name="nombre" value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" required>
+            </div>
+            <div class="form-group">
                 <label for="email"><?= t('email') ?>:</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
             </div>
             <div class="form-group">
                 <label for="password"><?= t('contrasena') ?>:</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit"><?= t('iniciar_sesion') ?></button>
+            <div class="form-group">
+                <label for="password_confirm"><?= t('confirmar_contrasena') ?>:</label>
+                <input type="password" id="password_confirm" name="password_confirm" required>
+            </div>
+            <button type="submit"><?= t('crear_cuenta') ?></button>
         </form>
         
         <div class="login-link">
-            <p><?= t('no_tienes_cuenta') ?> <a href="registro.php"><?= t('registrar_aqui') ?></a></p>
+            <p><?= t('ya_tienes_cuenta') ?> <a href="login.php"><?= t('iniciar_aqui') ?></a></p>
         </div>
-        
-        <p style="margin-top: 20px; font-size: 13px; color: #666;">
-            <strong><?= t('credenciales_prueba') ?></strong><br>
-            Admin: admin@hotel.com / admin123<br>
-            User: user@hotel.com / user123
-        </p>
     </div>
 </body>
 </html>
