@@ -200,14 +200,13 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
 </head>
 <body>
     <div class="container">
-        <div class="user-info">
-            <strong>👤 Usuario:</strong> <?= htmlspecialchars($_SESSION['nombreUsuario']) ?> 
-            (<?= htmlspecialchars($_SESSION['email']) ?>)
-            <?php if ($huesped_existente): ?>
-                <br><small style="color: #27ae60;">✅ Ya eres huésped registrado</small>
-            <?php else: ?>
-                <br><small style="color: #e74c3c;">⚠️ <?= t('documento_obligatorio') ?></small>
-            <?php endif; ?>
+        <div class="user-header">
+            <div class="user-details">
+                <strong>👤 Usuario:</strong> <?= htmlspecialchars($_SESSION['nombreUsuario']) ?> 
+                (<?= htmlspecialchars($_SESSION['email']) ?>)
+              <a href="../cerrar_sesion.php" class="logout-btn">🔒 <?= t('cerrar_sesion') ?></a>
+            </div>
+         
         </div>
         
         <h2>➕  <?= t('reserva_titulo') ?></h2>
@@ -225,7 +224,7 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
             <div class="form-group">
                 <label>Habitación:</label>
                 <select name="habitacion_id" required onchange="setPrecio(this)">
-                    <option value="">-- Seleccione --</option>
+                    <option value=""><?= t('-- Seleccione --') ?></option>
                     <?php foreach ($habitaciones as $h): ?>
                         <option value="<?= $h['id'] ?>" data-precio="<?= $h['precio_base'] ?>">
                             <?= htmlspecialchars($h['numero']) ?> (<?= $h['tipo'] ?>) - $<?= $h['precio_base'] ?>/noche
@@ -235,23 +234,17 @@ $habitaciones = $pdo->query("SELECT id, numero, tipo, precio_base FROM habitacio
             </div>
             <input type="hidden" name="precio_base" id="precio_base" value="0">
             <div class="form-group">
-                <label>Fecha de llegada:</label>
+                <label><?= t('fecha_llegada') ?>:</label>
                 <input type="date" name="fecha_llegada" required min="<?= date('Y-m-d') ?>">
             </div>
             <div class="form-group">
-                <label>Fecha de salida:</label>
+                <label><?= t('fecha_salida') ?>:</label>
                 <input type="date" name="fecha_salida" required min="<?= date('Y-m-d', strtotime('+1 day')) ?>">
             </div>
             <button type="submit"><?= t('crear_reserva') ?></button>
         </form>
     </div>
     
-    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-        <p>Bienvenido, <strong><?= htmlspecialchars($_SESSION['nombreUsuario']) ?></strong> (Usuario)</p>
-        <a href="../cerrar_sesion.php" style="display: inline-block; padding: 10px 20px; background: #e74c3c; color: white; text-decoration: none; border-radius: 5px;">
-            🔒 Cerrar Sesión
-        </a>
-    </div>
     
     <script>
         function setPrecio(sel) {
